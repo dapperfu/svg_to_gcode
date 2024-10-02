@@ -1,13 +1,13 @@
-from svg_to_gcode.geometry import Vector
-from svg_to_gcode.geometry import Curve
 from svg_to_gcode import formulas
+from svg_to_gcode.geometry import Curve
+from svg_to_gcode.geometry import Vector
 
 
 # A line segment
 class Line(Curve):
     """The Line class inherits from the abstract Curve class and describes a straight line segment."""
 
-    __slots__ = 'slope', 'offset'
+    __slots__ = "slope", "offset"
 
     def __init__(self, start, end):
         self.start = start

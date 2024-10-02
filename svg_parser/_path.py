@@ -1,12 +1,14 @@
 import math
 import warnings
-
 from typing import List
 
-from svg_to_gcode.geometry import Vector
-from svg_to_gcode.geometry import Line, EllipticalArc, CubicBazier, QuadraticBezier
-from svg_to_gcode.svg_parser import Transformation
 from svg_to_gcode import formulas
+from svg_to_gcode.geometry import CubicBazier
+from svg_to_gcode.geometry import EllipticalArc
+from svg_to_gcode.geometry import Line
+from svg_to_gcode.geometry import QuadraticBezier
+from svg_to_gcode.geometry import Vector
+from svg_to_gcode.svg_parser import Transformation
 
 verbose = False
 
@@ -14,13 +16,43 @@ verbose = False
 class Path:
     """The Path class represents a generic svg path."""
 
-    command_lengths = {'M': 2, 'm': 2, 'L': 2, 'l': 2, 'H': 1, 'h': 1, 'V': 1, 'v': 1, 'Z': 0, 'z': 0, 'C': 6, 'c': 6,
-                       'Q': 4, 'q': 4, 'S': 4, 's': 4, 'T': 2, 't': 2, 'A': 7, 'a': 7}
+    command_lengths = {
+        "M": 2,
+        "m": 2,
+        "L": 2,
+        "l": 2,
+        "H": 1,
+        "h": 1,
+        "V": 1,
+        "v": 1,
+        "Z": 0,
+        "z": 0,
+        "C": 6,
+        "c": 6,
+        "Q": 4,
+        "q": 4,
+        "S": 4,
+        "s": 4,
+        "T": 2,
+        "t": 2,
+        "A": 7,
+        "a": 7,
+    }
 
-    __slots__ = "curves", "initial_point", "current_point", "last_control", "canvas_height", "draw_move", \
-                "transform_origin", "transformation"
+    __slots__ = (
+        "curves",
+        "initial_point",
+        "current_point",
+        "last_control",
+        "canvas_height",
+        "draw_move",
+        "transform_origin",
+        "transformation",
+    )
 
-    def __init__(self, d: str, canvas_height: float, transform_origin=True, transformation=None):
+    def __init__(
+        self, d: str, canvas_height: float, transform_origin=True, transformation=None
+    ):
         self.canvas_height = canvas_height
         self.transform_origin = transform_origin
 
@@ -41,7 +73,9 @@ class Path:
         try:
             self._parse_commands(d)
         except Exception as generic_exception:
-            warnings.warn(f"Terminating path. The following unforeseen exception occurred: {generic_exception}")
+            warnings.warn(
+                f"Terminating path. The following unforeseen exception occurred: {generic_exception}"
+            )
 
     def __repr__(self):
         return f"Path({self.curves})"
@@ -49,18 +83,24 @@ class Path:
     def _parse_commands(self, d: str):
         """Parse svg commands (stored in value of the d key) into geometric curves."""
 
-        command_key = ''  # A character representing a specific command based on the svg standard
+        command_key = (
+            ""  # A character representing a specific command based on the svg standard
+        )
         command_arguments = []  # A list containing the arguments for the current command_key
 
-        number_str = ''  # A buffer used to store numeric characters before conferring them to a number
+        number_str = ""  # A buffer used to store numeric characters before conferring them to a number
 
         # Parse each character in d
         i = 0
         while i < len(d):
             character = d[i]
 
-            is_numeric = character.isnumeric() or character in ['-', '.', 'e']  # Yes, "-6.2e-4" is a valid float.
-            is_delimiter = character.isspace() or character in [',']
+            is_numeric = character.isnumeric() or character in [
+                "-",
+                ".",
+                "e",
+            ]  # Yes, "-6.2e-4" is a valid float.
+            is_delimiter = character.isspace() or character in [","]
             is_command_key = character in self.command_lengths.keys()
             is_final = i == len(d) - 1
 
@@ -68,15 +108,19 @@ class Path:
             # command has the same key. This is implemented by inserting the current key before the next command and
             # restarting the loop without incrementing i
             try:
-                if command_key and len(command_arguments) == self.command_lengths[command_key] and is_numeric:
+                if (
+                    command_key
+                    and len(command_arguments) == self.command_lengths[command_key]
+                    and is_numeric
+                ):
                     duplicate = command_key
                     # If a moveto is followed by multiple pairs of coordinates, the subsequent pairs are treated as
                     # implicit lineto commands. https://www.w3.org/TR/SVG2/paths.html#PathDataMovetoCommands
-                    if command_key == 'm':
-                        duplicate = 'l'
+                    if command_key == "m":
+                        duplicate = "l"
 
-                    if command_key == 'M':
-                        duplicate = 'L'
+                    if command_key == "M":
+                        duplicate = "L"
 
                     d = d[:i] + duplicate + d[i:]
                     continue
@@ -89,23 +133,25 @@ class Path:
 
                 # if a negative number follows another number, no delimiter is required.
                 # implicitly stated decimals like .6 don't require a delimiter. In either case we add a delimiter.
-                negatives = not is_final and character != 'e' and d[i + 1] == '-'
-                implicit_decimals = not is_final and d[i + 1] == '.' and '.' in number_str
+                negatives = not is_final and character != "e" and d[i + 1] == "-"
+                implicit_decimals = (
+                    not is_final and d[i + 1] == "." and "." in number_str
+                )
                 if negatives or implicit_decimals:
-                    d = d[:i+1] + ',' + d[i+1:]
+                    d = d[: i + 1] + "," + d[i + 1 :]
 
             # If the character is a delimiter or a command key or the last character, complete the number and save it
             # as an argument
             if is_delimiter or is_command_key or is_final:
                 if number_str:
                     # In svg form '-.5' can be written as '-.5'. Python doesn't like that notation.
-                    if number_str[0] == '.':
-                        number_str = '0' + number_str
-                    if number_str[0] == '-' and number_str[1] == '.':
-                        number_str = '-0' + number_str[1:]
+                    if number_str[0] == ".":
+                        number_str = "0" + number_str
+                    if number_str[0] == "-" and number_str[1] == ".":
+                        number_str = "-0" + number_str[1:]
 
                     command_arguments.append(float(number_str))
-                    number_str = ''
+                    number_str = ""
 
             # If it's a command key or the last character, parse the previous (now complete) command and save the letter
             # as the new command key
@@ -154,8 +200,10 @@ class Path:
             start = self.current_point
             end = Vector(x, y)
 
-            line = Line(self.transformation.apply_affine_transformation(start),
-                        self.transformation.apply_affine_transformation(end))
+            line = Line(
+                self.transformation.apply_affine_transformation(start),
+                self.transformation.apply_affine_transformation(end),
+            )
 
             self.current_point = end
 
@@ -181,13 +229,20 @@ class Path:
 
         # Draw curvy curves
         def absolute_cubic_bazier(control1_x, control1_y, control2_x, control2_y, x, y):
-
-            trans_start = self.transformation.apply_affine_transformation(self.current_point)
+            trans_start = self.transformation.apply_affine_transformation(
+                self.current_point
+            )
             trans_end = self.transformation.apply_affine_transformation(Vector(x, y))
-            trans_control1 = self.transformation.apply_affine_transformation(Vector(control1_x, control1_y))
-            trans_control2 = self.transformation.apply_affine_transformation(Vector(control2_x, control2_y))
+            trans_control1 = self.transformation.apply_affine_transformation(
+                Vector(control1_x, control1_y)
+            )
+            trans_control2 = self.transformation.apply_affine_transformation(
+                Vector(control2_x, control2_y)
+            )
 
-            cubic_bezier = CubicBazier(trans_start, trans_end, trans_control1, trans_control2)
+            cubic_bezier = CubicBazier(
+                trans_start, trans_end, trans_control1, trans_control2
+            )
 
             self.last_control = Vector(control2_x, control2_y)
             self.current_point = Vector(x, y)
@@ -195,9 +250,14 @@ class Path:
             return cubic_bezier
 
         def relative_cubic_bazier(dx1, dy1, dx2, dy2, dx, dy):
-            return absolute_cubic_bazier(self.current_point.x + dx1, self.current_point.y + dy1,
-                                         self.current_point.x + dx2, self.current_point.y + dy2,
-                                         self.current_point.x + dx, self.current_point.y + dy)
+            return absolute_cubic_bazier(
+                self.current_point.x + dx1,
+                self.current_point.y + dy1,
+                self.current_point.x + dx2,
+                self.current_point.y + dy2,
+                self.current_point.x + dx,
+                self.current_point.y + dy,
+            )
 
         def absolute_cubic_bezier_extension(x2, y2, x, y):
             start = self.current_point
@@ -215,14 +275,23 @@ class Path:
             return bazier
 
         def relative_cubic_bazier_extension(dx2, dy2, dx, dy):
-            return absolute_cubic_bezier_extension(self.current_point.x + dx2, self.current_point.y + dy2,
-                                                   self.current_point.x + dx, self.current_point.y + dy)
+            return absolute_cubic_bezier_extension(
+                self.current_point.x + dx2,
+                self.current_point.y + dy2,
+                self.current_point.x + dx,
+                self.current_point.y + dy,
+            )
 
         def absolute_quadratic_bazier(control1_x, control1_y, x, y):
-
-            trans_end = self.transformation.apply_affine_transformation(self.current_point)
-            trans_new_end = self.transformation.apply_affine_transformation(Vector(x, y))
-            trans_control1 = self.transformation.apply_affine_transformation(Vector(control1_x, control1_y))
+            trans_end = self.transformation.apply_affine_transformation(
+                self.current_point
+            )
+            trans_new_end = self.transformation.apply_affine_transformation(
+                Vector(x, y)
+            )
+            trans_control1 = self.transformation.apply_affine_transformation(
+                Vector(control1_x, control1_y)
+            )
 
             quadratic_bezier = QuadraticBezier(trans_end, trans_new_end, trans_control1)
 
@@ -232,8 +301,12 @@ class Path:
             return quadratic_bezier
 
         def relative_quadratic_bazier(dx1, dy1, dx, dy):
-            return absolute_quadratic_bazier(self.current_point.x + dx1, self.current_point.y + dy1,
-                                             self.current_point.x + dx, self.current_point.y + dy)
+            return absolute_quadratic_bazier(
+                self.current_point.x + dx1,
+                self.current_point.y + dy1,
+                self.current_point.x + dx,
+                self.current_point.y + dy,
+            )
 
         def absolute_quadratic_bazier_extension(x, y):
             start = self.current_point
@@ -249,7 +322,9 @@ class Path:
             return bazier
 
         def relative_quadratic_bazier_extension(dx, dy):
-            return absolute_quadratic_bazier_extension(self.current_point.x + dx, self.current_point.y + dy)
+            return absolute_quadratic_bazier_extension(
+                self.current_point.x + dx, self.current_point.y + dy
+            )
 
         # Generate EllipticalArc with center notation from svg endpoint notation.
         # Based on w3.org implementation notes. https://www.w3.org/TR/SVG2/implnote.html
@@ -262,58 +337,79 @@ class Path:
 
             rotation_rad = math.radians(deg_from_horizontal)
 
-            if abs(start-end) == 0:
+            if abs(start - end) == 0:
                 raise ValueError("start and end points can't be equal")
 
-            radii, center, start_angle, sweep_angle = formulas.endpoint_to_center_parameterization(
-                start, end, radii, rotation_rad, large_arc_flag, sweep_flag)
+            radii, center, start_angle, sweep_angle = (
+                formulas.endpoint_to_center_parameterization(
+                    start, end, radii, rotation_rad, large_arc_flag, sweep_flag
+                )
+            )
 
-            arc = EllipticalArc(center, radii, rotation_rad, start_angle, sweep_angle, transformation=self.transformation)
+            arc = EllipticalArc(
+                center,
+                radii,
+                rotation_rad,
+                start_angle,
+                sweep_angle,
+                transformation=self.transformation,
+            )
 
             self.current_point = end
             return arc
 
-        def relative_arc(rx, ry, deg_from_horizontal, large_arc_flag, sweep_flag, dx, dy):
-            return absolute_arc(rx, ry, deg_from_horizontal, large_arc_flag, sweep_flag, self.current_point.x + dx, self.current_point.y + dy)
+        def relative_arc(
+            rx, ry, deg_from_horizontal, large_arc_flag, sweep_flag, dx, dy
+        ):
+            return absolute_arc(
+                rx,
+                ry,
+                deg_from_horizontal,
+                large_arc_flag,
+                sweep_flag,
+                self.current_point.x + dx,
+                self.current_point.y + dy,
+            )
 
         command_methods = {
             # Only move end point
-            'M': absolute_move,
-            'm': relative_move,
-
+            "M": absolute_move,
+            "m": relative_move,
             # Draw straight line
-            'L': absolute_line,
-            'l': relative_line,
-            'H': absolute_horizontal_line,
-            'h': relative_horizontal_line,
-            'V': absolute_vertical_line,
-            'v': relative_vertical_line,
-            'Z': close_path,
-            'z': close_path,
-
+            "L": absolute_line,
+            "l": relative_line,
+            "H": absolute_horizontal_line,
+            "h": relative_horizontal_line,
+            "V": absolute_vertical_line,
+            "v": relative_vertical_line,
+            "Z": close_path,
+            "z": close_path,
             # Draw bazier curves
-            'C': absolute_cubic_bazier,
-            'c': relative_cubic_bazier,
-            'S': absolute_cubic_bezier_extension,
-            's': relative_cubic_bazier_extension,
-            'Q': absolute_quadratic_bazier,
-            'q': relative_quadratic_bazier,
-            'T': absolute_quadratic_bazier_extension,
-            't': relative_quadratic_bazier_extension,
-
+            "C": absolute_cubic_bazier,
+            "c": relative_cubic_bazier,
+            "S": absolute_cubic_bezier_extension,
+            "s": relative_cubic_bazier_extension,
+            "Q": absolute_quadratic_bazier,
+            "q": relative_quadratic_bazier,
+            "T": absolute_quadratic_bazier_extension,
+            "t": relative_quadratic_bazier_extension,
             # Draw elliptical arcs
-            'A': absolute_arc,
-            'a': relative_arc
+            "A": absolute_arc,
+            "a": relative_arc,
         }
 
         try:
             curve = command_methods[command_key](*command_arguments)
         except TypeError as type_error:
-            warnings.warn(f"Mis-formed input. Skipping command {command_key, command_arguments} because it caused the "
-                          f"following error: \n{type_error}")
+            warnings.warn(
+                f"Mis-formed input. Skipping command {command_key, command_arguments} because it caused the "
+                f"following error: \n{type_error}"
+            )
         except ValueError as value_error:
-            warnings.warn(f"Impossible geometry. Skipping curve {command_key, command_arguments} because it caused the "
-                          f"following value error:\n{value_error}")
+            warnings.warn(
+                f"Impossible geometry. Skipping curve {command_key, command_arguments} because it caused the "
+                f"following value error:\n{value_error}"
+            )
         else:
             if curve is not None:
                 self.curves.append(curve)

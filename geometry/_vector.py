@@ -1,7 +1,7 @@
 class Vector:
     """The Vector class is a simple representation of a 2D vector."""
 
-    __slots__ = 'x', 'y'
+    __slots__ = "x", "y"
 
     def __init__(self, x, y):
         self.x = x
@@ -26,15 +26,20 @@ class Vector:
 
     def __truediv__(self, other):
         if not (isinstance(other, int) or isinstance(other, float)):
-            raise TypeError(f"""unsupported operand type(s) for /: 'Vector' and {type(other)}""")
+            raise TypeError(
+                f"""unsupported operand type(s) for /: 'Vector' and {type(other)}"""
+            )
 
-        return Vector.scalar_product(self, 1/other)
+        return Vector.scalar_product(self, 1 / other)
 
     def __abs__(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+        return (self.x**2 + self.y**2) ** 0.5
 
     def __iter__(self):
-        yield from (self.x, self.y)  # ignore your editor, these parentheses are not redundant
+        yield from (
+            self.x,
+            self.y,
+        )  # ignore your editor, these parentheses are not redundant
 
     def __getitem__(self, index: int):
         return (self.x, self.y)[index]
@@ -45,7 +50,7 @@ class Vector:
 
     @staticmethod
     def dot_product(v1: "Vector", v2: "Vector"):
-        return v1.x*v2.x + v1.y*v2.y
+        return v1.x * v2.x + v1.y * v2.y
 
     @staticmethod
     def cross_product(v1: "Vector", v2: "Vector"):

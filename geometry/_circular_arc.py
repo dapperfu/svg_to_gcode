@@ -1,15 +1,15 @@
 import math
 
-from svg_to_gcode.geometry import Vector
-from svg_to_gcode.geometry import Curve
 from svg_to_gcode import formulas
 from svg_to_gcode import TOLERANCES
+from svg_to_gcode.geometry import Curve
+from svg_to_gcode.geometry import Vector
 
 
 class CircularArc(Curve):
     """The CircularArc class inherits from the abstract Curve class and describes a circular arc."""
 
-    __slots__ = 'center', 'radius', 'start_angle', 'end_angle'
+    __slots__ = "center", "radius", "start_angle", "end_angle"
 
     # ToDo use different instantiation parameters to be consistent with elliptical arcs
     def __init__(self, start: Vector, end: Vector, center: Vector):
@@ -33,7 +33,9 @@ class CircularArc(Curve):
         return translated
 
     def point_to_angle(self, point: Vector):
-        translated = (point - self.center)/self.radius  # translate the point onto the unit circle
+        translated = (
+            point - self.center
+        ) / self.radius  # translate the point onto the unit circle
         return math.acos(translated.x)
 
     def point(self, t):
@@ -49,24 +51,35 @@ class CircularArc(Curve):
         try:
             assert abs(self.start - self.end) > TOLERANCES["input"]
         except AssertionError:
-            raise ValueError(f"Arc is a point. The start and the end points are equivalent: "
-                             f"|{self.start} - {self.end}| <= {TOLERANCES['input']}")
+            raise ValueError(
+                f"Arc is a point. The start and the end points are equivalent: "
+                f"|{self.start} - {self.end}| <= {TOLERANCES['input']}"
+            )
 
         try:
             assert abs(self.start - self.center) > TOLERANCES["input"]
         except AssertionError:
-            raise ValueError(f"Arc is a line. The start and the center points are equivalent, "
-                             f"|{self.start} - {self.center}| <= {TOLERANCES['input']}")
+            raise ValueError(
+                f"Arc is a line. The start and the center points are equivalent, "
+                f"|{self.start} - {self.center}| <= {TOLERANCES['input']}"
+            )
 
         try:
             assert abs(self.end - self.center) > TOLERANCES["input"]
         except AssertionError:
-            raise ValueError(f"Arc is a line. The end and the center points are equivalent, "
-                             f"|{self.end} - {self.center}| <= {TOLERANCES['input']}")
+            raise ValueError(
+                f"Arc is a line. The end and the center points are equivalent, "
+                f"|{self.end} - {self.center}| <= {TOLERANCES['input']}"
+            )
 
         # Assert that the center is equidistant from the start and the end
         try:
-            assert abs(abs(self.start - self.center) - abs(self.end - self.center)) < TOLERANCES['input']
+            assert (
+                abs(abs(self.start - self.center) - abs(self.end - self.center))
+                < TOLERANCES["input"]
+            )
         except AssertionError:
-            raise ValueError(f"Center is not equidistant to the start and end points within tolerance, "
-                             f"|{abs(self.start - self.center)} - {abs(self.end - self.center)}| >= {TOLERANCES['input']}")
+            raise ValueError(
+                f"Center is not equidistant to the start and end points within tolerance, "
+                f"|{abs(self.start - self.center)} - {abs(self.end - self.center)}| >= {TOLERANCES['input']}"
+            )

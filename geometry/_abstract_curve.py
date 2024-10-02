@@ -14,7 +14,7 @@ class Curve:
     :type self.end: Vector
     """
 
-    __slots__ = 'start', 'end'
+    __slots__ = "start", "end"
 
     def point(self, t: float) -> Vector:
         """
@@ -44,8 +44,9 @@ class Curve:
         raise NotImplementedError("__repr__(self) must be implemented")
 
     @staticmethod
-    def max_distance(curve1: "Curve", curve2: "Curve", t_range1=(0, 1), t_range2=(0, 1), samples=9):
-
+    def max_distance(
+        curve1: "Curve", curve2: "Curve", t_range1=(0, 1), t_range2=(0, 1), samples=9
+    ):
         """
         Return the approximate maximum distance between two Curves for different values of t.
 
@@ -69,6 +70,8 @@ class Curve:
             t2 = formulas.linear_map(t_range2[0], t_range2[1], t)
 
             distance = abs(curve1.point(t1) - curve2.point(t2))
-            maximum_distance = distance if distance > maximum_distance else maximum_distance
+            maximum_distance = (
+                distance if distance > maximum_distance else maximum_distance
+            )
 
         return maximum_distance

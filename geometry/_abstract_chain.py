@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
-from svg_to_gcode.geometry import Curve
 from svg_to_gcode import formulas
+from svg_to_gcode.geometry import Curve
 
 
 class Chain(Curve):
@@ -11,7 +11,7 @@ class Chain(Curve):
     and derivative() methods.
     """
 
-    __slots__ = '_curves'
+    __slots__ = "_curves"
 
     def __init__(self, curves=None):
         self._curves = []
@@ -88,14 +88,18 @@ class Chain(Curve):
 
     def point(self, t):
         if self.chain_size() == 0:
-            raise ValueError("Chain.point was called before adding any curves to the chain.")
+            raise ValueError(
+                "Chain.point was called before adding any curves to the chain."
+            )
 
         curve, curve_t = self._get_curve_t(t)
         return curve.point(curve_t)
 
     def derivative(self, t):
         if self.chain_size() == 0:
-            raise ValueError("Chain.derivative was called before adding any curves to the chain.")
+            raise ValueError(
+                "Chain.derivative was called before adding any curves to the chain."
+            )
 
         curve, curve_t = self._get_curve_t(t)
         return curve.derivative(curve_t)

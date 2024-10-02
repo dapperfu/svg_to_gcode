@@ -4,8 +4,10 @@ It's used to limit code repetition and abstract complicated math functions.
 """
 
 import math
-from svg_to_gcode.geometry import Vector, RotationMatrix
+
 from svg_to_gcode import TOLERANCES
+from svg_to_gcode.geometry import RotationMatrix
+from svg_to_gcode.geometry import Vector
 
 
 def tolerance_constrain(value, maximum, minimum, tolerance=TOLERANCES["operation"]):
@@ -15,10 +17,10 @@ def tolerance_constrain(value, maximum, minimum, tolerance=TOLERANCES["operation
     out-of-bounds for a different reason.
     """
 
-    if value > maximum and value-maximum < tolerance:
+    if value > maximum and value - maximum < tolerance:
         return maximum
 
-    if value < minimum and minimum-value < tolerance:
+    if value < minimum and minimum - value < tolerance:
         return minimum
 
     return value
@@ -44,10 +46,17 @@ def line_offset(p1, p2):
 
 def line_intersect(p1, c1, p2, c2):
     """Find point of intersection between line p1c2 and p2c2"""
-    p1_c, c1_c, p2_c, c2_c = p1.conjugate(), c1.conjugate(), p2.conjugate(), c2.conjugate()
+    p1_c, c1_c, p2_c, c2_c = (
+        p1.conjugate(),
+        c1.conjugate(),
+        p2.conjugate(),
+        c2.conjugate(),
+    )
 
-    return (((c1_c - p1_c) * p1 - (c1 - p1) * p1_c) * (c2 - p2) - ((c2_c - p2_c) * p2 - (c2 - p2) * p2_c) * (
-            c1 - p1)) / ((c2 - p2) * (c1_c - p1_c) - (c1 - p1) * (c2_c - p2_c))
+    return (
+        ((c1_c - p1_c) * p1 - (c1 - p1) * p1_c) * (c2 - p2)
+        - ((c2_c - p2_c) * p2 - (c2 - p2) * p2_c) * (c1 - p1)
+    ) / ((c2 - p2) * (c1_c - p1_c) - (c1 - p1) * (c2_c - p2_c))
 
 
 def is_on_mid_perpendicular(z, a, b):
@@ -59,8 +68,9 @@ def tangent_arc_center(c, p, g):
     """Find center of circular arc which passes through p and g, and is tangent to the line pc"""
     c_c, p_c, g_c = c.conjugate(), p.conjugate(), g.conjugate()
 
-    return (c * g * (p_c - g_c) + p * (g * (-2 * p_c + c_c + g_c) + (p_c - c_c) * p)
-            ) / (g * (-p_c + c_c) + c * (p_c - g_c) + (-c_c + g_c) * p)
+    return (
+        c * g * (p_c - g_c) + p * (g * (-2 * p_c + c_c + g_c) + (p_c - c_c) * p)
+    ) / (g * (-p_c + c_c) + c * (p_c - g_c) + (-c_c + g_c) * p)
 
 
 def linear_map(min, max, t):
@@ -70,7 +80,7 @@ def linear_map(min, max, t):
 
 def inv_linear_map(min, max, t_p):
     """Linear map from t'∈[min, max] --> t∈[0, 1]"""
-    return (t_p - min)/(max - min)
+    return (t_p - min) / (max - min)
 
 
 def angle_between_vectors(v1, v2):
@@ -85,13 +95,23 @@ def angle_between_vectors(v1, v2):
     return angle
 
 
-def center_to_endpoint_parameterization(center, radii, rotation, start_angle, sweep_angle):
+def center_to_endpoint_parameterization(
+    center, radii, rotation, start_angle, sweep_angle
+):
     rotation_matrix = RotationMatrix(rotation)
 
-    start = rotation_matrix * Vector(radii.x * math.cos(start_angle), radii.y * math.sin(start_angle)) + center
+    start = (
+        rotation_matrix
+        * Vector(radii.x * math.cos(start_angle), radii.y * math.sin(start_angle))
+        + center
+    )
 
     end_angle = start_angle + sweep_angle
-    end = rotation_matrix * Vector(radii.x * math.cos(end_angle), radii.y * math.sin(end_angle)) + center
+    end = (
+        rotation_matrix
+        * Vector(radii.x * math.cos(end_angle), radii.y * math.sin(end_angle))
+        + center
+    )
 
     large_arc_flag = 1 if abs(sweep_angle) > math.pi else 0
     sweep_flag = 1 if sweep_angle > 0 else 0
@@ -99,10 +119,14 @@ def center_to_endpoint_parameterization(center, radii, rotation, start_angle, sw
     return start, end, large_arc_flag, sweep_flag
 
 
-def endpoint_to_center_parameterization(start, end, radii, rotation_rad, large_arc_flag, sweep_flag):
+def endpoint_to_center_parameterization(
+    start, end, radii, rotation_rad, large_arc_flag, sweep_flag
+):
     # Find and select one of the two possible eclipse centers by undoing the rotation (to simplify the math) and
     # then re-applying it.
-    rotated_primed_values = (start - end) / 2  # Find the primed_values of the start and the end points.
+    rotated_primed_values = (
+        start - end
+    ) / 2  # Find the primed_values of the start and the end points.
     primed_values = RotationMatrix(rotation_rad, True) * rotated_primed_values
     px, py = primed_values.x, primed_values.y
 
@@ -110,7 +134,7 @@ def endpoint_to_center_parameterization(start, end, radii, rotation_rad, large_a
     rx = abs(radii.x)
     ry = abs(radii.y)
 
-    delta = px ** 2 / rx ** 2 + py ** 2 / ry ** 2
+    delta = px**2 / rx**2 + py**2 / ry**2
 
     if delta > 1:
         rx *= math.sqrt(delta)
@@ -119,22 +143,28 @@ def endpoint_to_center_parameterization(start, end, radii, rotation_rad, large_a
     if math.sqrt(delta) > 1:
         center = Vector(0, 0)
     else:
-        radicant = ((rx * ry) ** 2 - (rx * py) ** 2 - (ry * px) ** 2) / ((rx * py) ** 2 + (ry * px) ** 2)
+        radicant = ((rx * ry) ** 2 - (rx * py) ** 2 - (ry * px) ** 2) / (
+            (rx * py) ** 2 + (ry * px) ** 2
+        )
         radicant = max(0, radicant)
 
         # Find center using w3.org's formula
-        center = math.sqrt(radicant) * Vector((rx * py) / ry, - (ry * px) / rx)
+        center = math.sqrt(radicant) * Vector((rx * py) / ry, -(ry * px) / rx)
 
-        center *= -1 if large_arc_flag == sweep_flag else 1  # Select one of the two solutions based on flags
+        center *= (
+            -1 if large_arc_flag == sweep_flag else 1
+        )  # Select one of the two solutions based on flags
 
-    rotated_center = RotationMatrix(rotation_rad) * center + (start + end) / 2  # re-apply the rotation
+    rotated_center = (
+        RotationMatrix(rotation_rad) * center + (start + end) / 2
+    )  # re-apply the rotation
 
     cx, cy = center.x, center.y
     u = Vector((px - cx) / rx, (py - cy) / ry)
     v = Vector((-px - cx) / rx, (-py - cy) / ry)
 
     max_angle = 2 * math.pi
-    
+
     start_angle = angle_between_vectors(Vector(1, 0), u)
     sweep_angle_unbounded = angle_between_vectors(u, v)
     sweep_angle = sweep_angle_unbounded % max_angle

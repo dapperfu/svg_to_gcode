@@ -1,5 +1,4 @@
 class Interface:
-
     """
     Classes which inherit from the abstract Interface class provide a consistent interface_class for the gcode parser.
 
@@ -18,7 +17,9 @@ class Interface:
 
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the set_speed command")
+        raise NotImplementedError(
+            "Interface class must implement the set_speed command"
+        )
 
     def linear_move(self, x=None, y=None, z=None) -> str:
         """
@@ -26,7 +27,9 @@ class Interface:
 
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the linear_move command")
+        raise NotImplementedError(
+            "Interface class must implement the linear_move command"
+        )
 
     def laser_off(self) -> str:
         """
@@ -34,7 +37,9 @@ class Interface:
 
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the laser_off command")
+        raise NotImplementedError(
+            "Interface class must implement the laser_off command"
+        )
 
     def set_laser_power(self, power) -> str:
         """
@@ -44,7 +49,9 @@ class Interface:
         :param power: Defines the power level of the laser. Valid values range between 0 and 1.
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the laser_power command")
+        raise NotImplementedError(
+            "Interface class must implement the laser_power command"
+        )
 
     def set_absolute_coordinates(self) -> str:
         """
@@ -56,7 +63,9 @@ class Interface:
 
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the set_absolute_coordinates command")
+        raise NotImplementedError(
+            "Interface class must implement the set_absolute_coordinates command"
+        )
 
     def set_relative_coordinates(self) -> str:
         """
@@ -68,7 +77,9 @@ class Interface:
 
         :return: Appropriate command.
         """
-        raise NotImplementedError("Interface class must implement the set_relative_coordinates command")
+        raise NotImplementedError(
+            "Interface class must implement the set_relative_coordinates command"
+        )
 
     # Optional commands #
     def dwell(self, milliseconds) -> str:

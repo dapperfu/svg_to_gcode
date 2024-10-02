@@ -1,16 +1,15 @@
-import warnings
 import math
+import warnings
 
 from svg_to_gcode import formulas
+from svg_to_gcode import TOLERANCES
 from svg_to_gcode.compiler.interfaces import Interface
 from svg_to_gcode.geometry import Vector
-from svg_to_gcode import TOLERANCES
 
 verbose = False
 
 
 class Gcode(Interface):
-
     def __init__(self):
         self.position = None
         self._next_speed = None
@@ -21,17 +20,18 @@ class Gcode(Interface):
 
     def set_movement_speed(self, speed):
         self._next_speed = speed
-        return ''
+        return ""
 
     def linear_move(self, x=None, y=None, z=None):
-
         if self._next_speed is None:
-            raise ValueError("Undefined movement speed. Call set_movement_speed before executing movement commands.")
+            raise ValueError(
+                "Undefined movement speed. Call set_movement_speed before executing movement commands."
+            )
 
         # Don't do anything if linear move was called without passing a value.
         if x is None and y is None and z is None:
             warnings.warn("linear_move command invoked without arguments.")
-            return ''
+            return ""
 
         # Todo, investigate G0 command and replace movement speeds with G1 (normal speed) and G0 (fast move)
         command = "G1"
@@ -41,9 +41,9 @@ class Gcode(Interface):
             command += f" F{self._current_speed}"
 
         # Move if not 0 and not None
-        command += f" X{x:.{self.precision}f}" if x is not None else ''
-        command += f" Y{y:.{self.precision}f}" if y is not None else ''
-        command += f" Z{z:.{self.precision}f}" if z is not None else ''
+        command += f" X{x:.{self.precision}f}" if x is not None else ""
+        command += f" Y{y:.{self.precision}f}" if y is not None else ""
+        command += f" Z{z:.{self.precision}f}" if z is not None else ""
 
         if self.position is not None or (x is not None and y is not None):
             if x is None:
@@ -57,15 +57,17 @@ class Gcode(Interface):
         if verbose:
             print(f"Move to {x}, {y}, {z}")
 
-        return command + ';'
+        return command + ";"
 
     def laser_off(self):
         return f"M5;"
 
     def set_laser_power(self, power):
         if power < 0 or power > 1:
-            raise ValueError(f"{power} is out of bounds. Laser power must be given between 0 and 1. "
-                             f"The interface will scale it correctly.")
+            raise ValueError(
+                f"{power} is out of bounds. Laser power must be given between 0 and 1. "
+                f"The interface will scale it correctly."
+            )
 
         return f"M3 S{formulas.linear_map(0, 255, power)};"
 
@@ -89,7 +91,7 @@ class Gcode(Interface):
         if unit == "in":
             return "G20;"
 
-        return ''
+        return ""
 
     def home_axes(self):
         return "G28;"

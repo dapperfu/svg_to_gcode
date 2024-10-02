@@ -1,13 +1,16 @@
 import math
 from copy import deepcopy
 
-from svg_to_gcode.geometry import Vector, Matrix, IdentityMatrix
+from svg_to_gcode.geometry import IdentityMatrix
+from svg_to_gcode.geometry import Matrix
+from svg_to_gcode.geometry import Vector
 
 
 class Transformation:
     """
     The Transformation class handles the parsing and computation behind svg transform attributes.
     """
+
     __slots__ = "translation_matrix", "transformation_record", "command_methods"
 
     def __init__(self):
@@ -17,18 +20,22 @@ class Transformation:
         self.transformation_record = []
 
         self.command_methods = {
-                "matrix": self.add_matrix,
-                "translate": self.add_translation,
-                "scale": self.add_scale,
-                "rotate": self.add_rotation,
-                "skewX": self.add_skew_x,
-                "skewY": self.add_skew_y
-            }
+            "matrix": self.add_matrix,
+            "translate": self.add_translation,
+            "scale": self.add_scale,
+            "rotate": self.add_rotation,
+            "skewX": self.add_skew_x,
+            "skewY": self.add_skew_y,
+        }
 
     def __repr__(self):
         transformations = ", ".join(
-            [f"{transformation[0]}("f"{', '.join(map(lambda x: str(x), self.transformation_record[0][1]))})"
-                                    for transformation in self.transformation_record])
+            [
+                f"{transformation[0]}("
+                f"{', '.join(map(lambda x: str(x), self.transformation_record[0][1]))})"
+                for transformation in self.transformation_record
+            ]
+        )
         return f"Transformation({transformations})"
 
     def __deepcopy__(self, memodict={}):
@@ -38,17 +45,20 @@ class Transformation:
         return copy
 
     def add_transform(self, transform_string: str):
-        transformations = transform_string.split(')')
+        transformations = transform_string.split(")")
 
         for transformation in transformations:
             transformation = transformation.strip()
-            if not transformation or '(' not in transformation:
+            if not transformation or "(" not in transformation:
                 continue
 
-            command, arguments = transformation.split('(')
-            command = command.replace(',', '')
+            command, arguments = transformation.split("(")
+            command = command.replace(",", "")
             command = command.strip()
-            arguments = [float(argument.strip()) for argument in arguments.replace(',', ' ').split()]
+            arguments = [
+                float(argument.strip())
+                for argument in arguments.replace(",", " ").split()
+            ]
 
             command_method = self.command_methods[command]
 
@@ -57,23 +67,15 @@ class Transformation:
     # SVG transforms are equivalent to CSS transforms https://www.w3.org/TR/css-transforms-1/#MatrixDefined
     def add_matrix(self, a, b, c, d, e, f):
         self.transformation_record.append(("matrix", [a, b, c, d, e, f]))
-        matrix = Matrix([
-            [a, c, 0, e],
-            [b, d, 0, f],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ])
+        matrix = Matrix([[a, c, 0, e], [b, d, 0, f], [0, 0, 1, 0], [0, 0, 0, 1]])
 
         self.translation_matrix *= matrix
 
     def add_translation(self, x: float, y=0.0):
         self.transformation_record.append(("translate", [x, y]))
-        translation_matrix = Matrix([
-            [1, 0, 0, x],
-            [0, 1, 0, y],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ])
+        translation_matrix = Matrix(
+            [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, 0], [0, 0, 0, 1]]
+        )
 
         self.translation_matrix *= translation_matrix
 
@@ -83,12 +85,9 @@ class Transformation:
 
         self.transformation_record.append(("scale", [factor_x, factor_y]))
 
-        scale_matrix = Matrix([
-            [factor_x, 0,        0, 0],
-            [0,        factor_y, 0, 0],
-            [0,        0,        1, 0],
-            [0,        0,        0, 1]
-        ])
+        scale_matrix = Matrix(
+            [[factor_x, 0, 0, 0], [0, factor_y, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        )
 
         self.translation_matrix *= scale_matrix
 
@@ -96,12 +95,14 @@ class Transformation:
         self.transformation_record.append(("rotate", [angle]))
 
         angle = math.radians(angle)
-        rotation_matrix = Matrix([
-            [math.cos(angle), -math.sin(angle), 0, 0],
-            [math.sin(angle), math.cos(angle),  0, 0],
-            [0,               0,                1, 0],
-            [0,               0,                0, 1]
-        ])
+        rotation_matrix = Matrix(
+            [
+                [math.cos(angle), -math.sin(angle), 0, 0],
+                [math.sin(angle), math.cos(angle), 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        )
 
         self.translation_matrix *= rotation_matrix
 
@@ -147,9 +148,6 @@ class Transformation:
         c = self.translation_matrix[0][1]
         d = self.translation_matrix[1][1]
 
-        linear_transformation = Matrix([
-            [a, c],
-            [b, d]
-        ])
+        linear_transformation = Matrix([[a, c], [b, d]])
 
         return linear_transformation * vector

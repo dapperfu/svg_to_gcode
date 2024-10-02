@@ -1,13 +1,21 @@
 from xml.etree import ElementTree
 
-from svg_to_gcode.geometry import LineSegmentChain, Vector
+from svg_to_gcode.geometry import LineSegmentChain
+from svg_to_gcode.geometry import Vector
 
 
-svg_namespace = 'http://www.w3.org/2000/svg'
+svg_namespace = "http://www.w3.org/2000/svg"
 
 
-def to_svg_path(line_segment_chain: LineSegmentChain, transformation=None, color="black", opacity="1",
-                stroke_width="0.864583px", draw_arrows=False, arrow_id="arrow-346") -> ElementTree.Element:
+def to_svg_path(
+    line_segment_chain: LineSegmentChain,
+    transformation=None,
+    color="black",
+    opacity="1",
+    stroke_width="0.864583px",
+    draw_arrows=False,
+    arrow_id="arrow-346",
+) -> ElementTree.Element:
     """
     A handy debugging function which converts the current line-chain to svg form
 
@@ -63,5 +71,5 @@ def arrow_defs(arrow_scale=1, arrow_id="arrow-346"):
     arrow.set("stroke", "black")
     arrow.set("stroke-width", "0.1")
     marker.append(arrow)
-    
+
     return defs

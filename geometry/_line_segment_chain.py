@@ -1,6 +1,8 @@
-from svg_to_gcode.geometry import Chain
-from svg_to_gcode.geometry import Curve, Line, Vector
 from svg_to_gcode import TOLERANCES
+from svg_to_gcode.geometry import Chain
+from svg_to_gcode.geometry import Curve
+from svg_to_gcode.geometry import Line
+from svg_to_gcode.geometry import Vector
 
 
 class LineSegmentChain(Chain):
@@ -11,6 +13,7 @@ class LineSegmentChain(Chain):
     LineSegmentChains can be instantiated either conventionally or through the static method line_segment_approximation(),
     which approximates any Curve with a series of line-segments contained in a new LineSegmentChain instance.
     """
+
     def __repr__(self):
         return f"{type(self)}({len(self._curves)} curves: {[line.__repr__() for line in self._curves[:2]]}...)"
 
@@ -19,9 +22,11 @@ class LineSegmentChain(Chain):
             line1 = self._curves[-1]
 
             # Assert continuity
-            if abs(line1.end - line2.start) > TOLERANCES['input']:
-                raise ValueError(f"The end of the last line is different from the start of the new line"
-                                 f"|{line1.end} - {line2.start}| >= {TOLERANCES['input']}")
+            if abs(line1.end - line2.start) > TOLERANCES["input"]:
+                raise ValueError(
+                    f"The end of the last line is different from the start of the new line"
+                    f"|{line1.end} - {line2.start}| >= {TOLERANCES['input']}"
+                )
 
             # Join lines
             line2.start = line1.end
@@ -29,8 +34,9 @@ class LineSegmentChain(Chain):
         self._curves.append(line2)
 
     @staticmethod
-    def line_segment_approximation(shape, increment_growth=11 / 10, error_cap=None, error_floor=None)\
-            -> "LineSegmentChain":
+    def line_segment_approximation(
+        shape, increment_growth=11 / 10, error_cap=None, error_floor=None
+    ) -> "LineSegmentChain":
         """
         This method approximates any shape using straight line segments.
 
@@ -41,11 +47,15 @@ class LineSegmentChain(Chain):
         :return: A LineSegmentChain which approximates the given shape.
         """
 
-        error_cap = TOLERANCES['approximation'] if error_cap is None else error_cap
-        error_floor = (increment_growth - 1) * error_cap if error_floor is None else error_floor
+        error_cap = TOLERANCES["approximation"] if error_cap is None else error_cap
+        error_floor = (
+            (increment_growth - 1) * error_cap if error_floor is None else error_floor
+        )
 
         if error_cap <= 0:
-            raise ValueError(f"This algorithm is approximate. error_cap must be a non-zero positive float. Not {error_cap}")
+            raise ValueError(
+                f"This algorithm is approximate. error_cap must be a non-zero positive float. Not {error_cap}"
+            )
 
         if increment_growth <= 1:
             raise ValueError(f"increment_growth must be > 1. Not {increment_growth}")
